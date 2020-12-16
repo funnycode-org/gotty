@@ -5,4 +5,5 @@ type Listener interface {
 	OnClose() error
 	OnSend(pks []byte) error
 	OnReceive() ([]byte, error)
+	OnError() error
 }

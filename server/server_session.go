@@ -1,6 +1,9 @@
 package server
 
+import "net"
+
 type Session struct {
+	Connection net.Conn
 }
 
 func (s Session) Close() error {
