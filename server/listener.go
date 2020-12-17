@@ -6,4 +6,6 @@ import (
 
 type Listener interface {
 	base.Listener
+	GetRegistryListenerName() string
+	AddRegistryListener(listenerName string) error
 }

@@ -15,7 +15,8 @@ var (
 		Usage: "start server",
 		Action: func(c *cli.Context) error {
 			server := server.NewServer()
-			return server.Start()
+			go server.Start()
+			return nil
 		},
 	}
 	cmdStartClient = cli.Command{

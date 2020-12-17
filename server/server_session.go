@@ -1,9 +1,14 @@
 package server
 
-import "net"
-
 type Session struct {
-	Connection net.Conn
+	//Connection net.Conn
+	l Listener
+}
+
+func NewSession(l Listener) *Session {
+	return &Session{
+		l: l,
+	}
 }
 
 func (s Session) Close() error {
@@ -12,4 +17,8 @@ func (s Session) Close() error {
 
 func (s Session) Open() error {
 	panic("implement me")
+}
+
+func (s Session) SessionId() int {
+	return 0
 }

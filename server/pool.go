@@ -31,7 +31,6 @@ func (wp *WorkPool) AddConnection(con *base.Connection) error {
 	var err error
 	select {
 	case connectionChannel := <-wp.pools:
-		//context.WithTimeout()
 		timeout, _ := context.WithTimeout(connectionChannelContext, time.Millisecond*time.Duration(wp.timeout)-time.Now().Sub(now))
 		select {
 		case <-timeout.Done():
@@ -51,16 +50,16 @@ func (wp *WorkPool) AddConnection(con *base.Connection) error {
 }
 
 type WorkConnection struct {
-	connectionChannel chan base.Connection
+	connectionChannel chan *base.Connection
 	sessionNum        uint
 }
 
-func (wc *WorkConnection) AcceptConnection(pools chan chan base.Connection) {
+func (wc *WorkConnection) AcceptConnection(pools chan chan *base.Connection) {
 	for {
 		pools <- wc.connectionChannel
 		select {
 		case con := <-wc.connectionChannel:
-			con.Do()
+			go con.Do()
 			break
 		}
 	}
@@ -69,7 +68,7 @@ func (wc *WorkConnection) AcceptConnection(pools chan chan base.Connection) {
 func newWorkPool(workNum, sessionNum uint) *WorkPool {
 	return &WorkPool{
 		workNum: workNum,
-		pools: func() (pools chan chan base.Connection) {
+		pools: func() (pools chan chan *base.Connection) {
 			var err error
 			if pools, err = initPools(workNum, sessionNum); err == nil {
 				return pools
@@ -79,15 +78,15 @@ func newWorkPool(workNum, sessionNum uint) *WorkPool {
 	}
 }
 
-func initPools(workNum, sessionNum uint) (chan chan base.Connection, error) {
+func initPools(workNum, sessionNum uint) (chan chan *base.Connection, error) {
 	numCpu := uint(runtime.NumCPU())
 	if workNum == 0 {
 		workNum = numCpu
 	}
-	var workChannels = make(chan chan base.Connection, workNum)
+	var workChannels = make(chan chan *base.Connection, workNum)
 	for ; workNum > 0; workNum-- {
 		wc := &WorkConnection{
-			connectionChannel: make(chan base.Connection, sessionNum),
+			connectionChannel: make(chan *base.Connection, sessionNum),
 			sessionNum:        sessionNum,
 		}
 		go wc.AcceptConnection(workChannels)

@@ -35,7 +35,7 @@ func (server *Server) Start() error {
 			return err
 		}
 		// 每个Client一个Goroutine
-		go server.workPool.AddConnection(base.NewConnection(conn, base.GottyConfig.Server.SessionNumPerConnection))
+		server.workPool.AddConnection(base.NewConnection(conn, base.GottyConfig.Server.SessionNumPerConnection))
 	}
 	return nil
 }

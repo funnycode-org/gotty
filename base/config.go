@@ -29,9 +29,10 @@ type Config struct {
 }
 
 type Server struct {
-	Concurrency             uint `json:"concurrency" yaml:"concurrency"`
-	SessionNumPerConnection uint `json:"sessionNumPerConnection" yaml:"sessionNumPerConnection"`
-	Port                    uint `json:"port" yaml:"port"`
+	Concurrency             uint   `json:"concurrency" yaml:"concurrency"`
+	SessionNumPerConnection uint   `json:"sessionNumPerConnection" yaml:"sessionNumPerConnection"`
+	Port                    uint   `json:"port" yaml:"port"`
+	ListenerName            string `json:"listenerName" yaml:"listenerName"`
 }
 type Client struct {
 }
