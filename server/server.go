@@ -1,22 +1,31 @@
 package server
 
 import (
-	"fmt"
 	"github.com/funnycode-org/gotty/base"
 	"net"
+	"strconv"
 )
 
 type Server struct {
-	Concurrency int // 并发个数
-	connections map[string]base.Connection
+	concurrency uint // 并发个数
+	workPool    *WorkPool
 }
 
-func NewServer(concurrency int) *Server {
-
+func NewServer() *Server {
+	server := &Server{
+		concurrency: base.GottyConfig.Server.Concurrency,
+		workPool:    newWorkPool(base.GottyConfig.Server.Concurrency, base.GottyConfig.Server.SessionNumPerConnection),
+		//connections: make(map[string]base.Connection, 13),
+	}
+	return server
 }
 
 func (server *Server) Start() error {
-	ln, err := net.Listen("tcp", ":8080")
+	var port uint = 8080
+	if base.GottyConfig.Server.Port > 0 {
+		port = base.GottyConfig.Server.Port
+	}
+	ln, err := net.Listen("tcp", strconv.Itoa(int(port)))
 	if err != nil {
 		return err
 	}
@@ -26,28 +35,7 @@ func (server *Server) Start() error {
 			return err
 		}
 		// 每个Client一个Goroutine
-		go handleConnection(conn)
+		go server.workPool.AddConnection(base.NewConnection(conn, base.GottyConfig.Server.SessionNumPerConnection))
 	}
 	return nil
-}
-
-func handleConnection(conn net.Conn) {
-	defer conn.Close()
-	var body [4]byte
-	addr := conn.RemoteAddr()
-	for {
-		// 读取客户端消息
-		_, err := conn.Read(body[:])
-		if err != nil {
-			break
-		}
-		fmt.Printf("收到%s消息: %s\n", addr, string(body[:]))
-		// 回包
-		_, err = conn.Write(body[:])
-		if err != nil {
-			break
-		}
-		fmt.Printf("发送给%s: %s\n", addr, string(body[:]))
-	}
-	fmt.Printf("与%s断开!\n", addr)
 }

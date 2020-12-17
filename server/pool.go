@@ -15,23 +15,34 @@ const (
 )
 
 type WorkPool struct {
-	pools   chan chan base.Connection
+	pools   chan chan *base.Connection
 	workNum uint
 	timeout uint // Millisecond unit
 }
 
-func (wp *WorkPool) AddConnection(con base.Connection) error {
+func (wp *WorkPool) AddConnection(con *base.Connection) error {
 	if wp.timeout == 0 {
 		wp.timeout = defaultTimeout
 	}
-	timeoutContext, cancel := context.WithTimeout(context.Background(), time.Millisecond*time.Duration(wp.timeout))
+
+	connectionChannelContext, cancel := context.WithTimeout(context.Background(), time.Millisecond*time.Duration(wp.timeout))
 	defer cancel()
+	now := time.Now()
 	var err error
 	select {
 	case connectionChannel := <-wp.pools:
-		connectionChannel <- con
+		//context.WithTimeout()
+		timeout, _ := context.WithTimeout(connectionChannelContext, time.Millisecond*time.Duration(wp.timeout)-time.Now().Sub(now))
+		select {
+		case <-timeout.Done():
+			log.Println("任务入队超时")
+			break
+		case connectionChannel <- con:
+			log.Println("添加了一个连接任务")
+			break
+		}
 		break
-	case <-timeoutContext.Done():
+	case <-connectionChannelContext.Done():
 		err = errors.New("处理连接超时")
 		log.Println(err)
 		break
@@ -70,16 +81,16 @@ func newWorkPool(workNum, sessionNum uint) *WorkPool {
 
 func initPools(workNum, sessionNum uint) (chan chan base.Connection, error) {
 	numCpu := uint(runtime.NumCPU())
-	if workNum < numCpu {
+	if workNum == 0 {
 		workNum = numCpu
 	}
 	var workChannels = make(chan chan base.Connection, workNum)
 	for ; workNum > 0; workNum-- {
-		w := &WorkConnection{
+		wc := &WorkConnection{
 			connectionChannel: make(chan base.Connection, sessionNum),
 			sessionNum:        sessionNum,
 		}
-		go w.AcceptConnection(workChannels)
+		go wc.AcceptConnection(workChannels)
 	}
 	return workChannels, nil
 }

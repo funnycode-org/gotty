@@ -10,3 +10,6 @@ func (s Session) Close() error {
 func (s Session) Open() error {
 	panic("implement me")
 }
+func (s Session) SessionId() int {
+
+}

@@ -1,0 +1,3 @@
+server:
+  concurrency: 4
+  sessionNumPerConnection: 100
