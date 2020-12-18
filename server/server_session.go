@@ -1,13 +1,17 @@
 package server
 
+import "github.com/funnycode-org/gotty/server/listener"
+
 type Session struct {
 	//Connection net.Conn
-	l Listener
+	l             listener.Listener
+	receivedBytes []byte
 }
 
-func NewSession(l Listener) *Session {
+func NewSession(l listener.Listener) *Session {
 	return &Session{
-		l: l,
+		l:             l,
+		receivedBytes: make([]byte, 1024),
 	}
 }
 

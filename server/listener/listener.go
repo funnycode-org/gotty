@@ -1,4 +1,4 @@
-package server
+package listener
 
 import (
 	"github.com/funnycode-org/gotty/base"
@@ -7,5 +7,5 @@ import (
 type Listener interface {
 	base.Listener
 	GetRegistryListenerName() string
-	AddRegistryListener(listenerName string) error
+	FactoryConstruct() error
 }

@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/funnycode-org/gotty/base"
+	"github.com/funnycode-org/gotty/server/listener"
 	"net"
 	"strconv"
 )
@@ -35,7 +36,20 @@ func (server *Server) Start() error {
 			return err
 		}
 		// 每个Client一个Goroutine
-		server.workPool.AddConnection(base.NewConnection(conn, base.GottyConfig.Server.SessionNumPerConnection))
+		server.workPool.AddConnection(NewConnection(conn, NewSession(server.FindListener())))
 	}
 	return nil
+}
+
+func (server *Server) FindListener() (serverListener listener.Listener) {
+	listenerName := base.GottyConfig.Server.ListenerName
+	var err error
+	if len(listenerName) <= 0 {
+		listenerName = listener.DefaultListenerName
+	}
+	serverListener, err = listener.FindListener(listenerName)()
+	if err != nil {
+		serverListener, _ = listener.FindListener(listener.DefaultListenerName)()
+	}
+	return
 }

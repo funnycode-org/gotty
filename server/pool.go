@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/funnycode-org/gotty/base"
 	"log"
 	"runtime"
 	"time"
@@ -15,12 +14,12 @@ const (
 )
 
 type WorkPool struct {
-	pools   chan chan *base.Connection
+	pools   chan chan *Connection
 	workNum uint
 	timeout uint // Millisecond unit
 }
 
-func (wp *WorkPool) AddConnection(con *base.Connection) error {
+func (wp *WorkPool) AddConnection(con *Connection) error {
 	if wp.timeout == 0 {
 		wp.timeout = defaultTimeout
 	}
@@ -50,11 +49,11 @@ func (wp *WorkPool) AddConnection(con *base.Connection) error {
 }
 
 type WorkConnection struct {
-	connectionChannel chan *base.Connection
+	connectionChannel chan *Connection
 	sessionNum        uint
 }
 
-func (wc *WorkConnection) AcceptConnection(pools chan chan *base.Connection) {
+func (wc *WorkConnection) AcceptConnection(pools chan chan *Connection) {
 	for {
 		pools <- wc.connectionChannel
 		select {
@@ -68,7 +67,7 @@ func (wc *WorkConnection) AcceptConnection(pools chan chan *base.Connection) {
 func newWorkPool(workNum, sessionNum uint) *WorkPool {
 	return &WorkPool{
 		workNum: workNum,
-		pools: func() (pools chan chan *base.Connection) {
+		pools: func() (pools chan chan *Connection) {
 			var err error
 			if pools, err = initPools(workNum, sessionNum); err == nil {
 				return pools
@@ -78,15 +77,15 @@ func newWorkPool(workNum, sessionNum uint) *WorkPool {
 	}
 }
 
-func initPools(workNum, sessionNum uint) (chan chan *base.Connection, error) {
+func initPools(workNum, sessionNum uint) (chan chan *Connection, error) {
 	numCpu := uint(runtime.NumCPU())
 	if workNum == 0 {
 		workNum = numCpu
 	}
-	var workChannels = make(chan chan *base.Connection, workNum)
+	var workChannels = make(chan chan *Connection, workNum)
 	for ; workNum > 0; workNum-- {
 		wc := &WorkConnection{
-			connectionChannel: make(chan *base.Connection, sessionNum),
+			connectionChannel: make(chan *Connection, sessionNum),
 			sessionNum:        sessionNum,
 		}
 		go wc.AcceptConnection(workChannels)
