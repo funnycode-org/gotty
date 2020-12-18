@@ -15,8 +15,10 @@ func NewSession(l listener.Listener) *Session {
 	}
 }
 
-func (s Session) Close() error {
-	panic("implement me")
+func (s *Session) Close() error {
+	s.l = nil
+	s.receivedBytes = nil
+	return nil
 }
 
 func (s Session) Open() error {

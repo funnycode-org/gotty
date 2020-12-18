@@ -23,6 +23,7 @@ type Connection struct {
 func NewConnection(con net.Conn, session base.Session) *Connection {
 	return &Connection{
 		con:     con,
+		close:   make(chan struct{}, 1),
 		session: session,
 		//sessionMap: sessionMap{
 		//	sessionIds: make(map[int]struct{}, sessionCount),
@@ -39,7 +40,7 @@ func (con *Connection) LoopReceivePkgs() {
 			return
 		}
 	}()
-	serverSession := con.session.(Session)
+	serverSession := con.session.(*Session)
 	var pktBuf bytes.Buffer
 READ:
 	for {
@@ -50,7 +51,7 @@ READ:
 			goto READ
 		default:
 			log.Printf("receive pkgs error:%v", err)
-			con.session.Close()
+			con.close <- struct{}{}
 			break READ
 		}
 		if count == 0 {
@@ -59,18 +60,27 @@ READ:
 		pktBuf.Reset()
 		pktBuf.Write(serverSession.receivedBytes)
 		// 包有问题，清空？
-		err = con.tryExtractPkgs(&pktBuf)
+		readCount, err := con.tryExtractPkgs(&pktBuf)
 		if err != nil {
 			serverSession.receivedBytes = serverSession.receivedBytes[:0]
 			pktBuf.Reset()
 			continue
 		}
-	}
+		if pktBuf.Len() < 1 {
+			pktBuf.Reset()
+			continue
+		}
 
+		// 回退回去
+		for ; readCount < 1; readCount-- {
+			pktBuf.UnreadByte()
+		}
+	}
 }
 
-//
-func (con *Connection) tryExtractPkgs(pktBuf *bytes.Buffer) error {
+// 使用用户的自定义的协议去解包
+func (con *Connection) tryExtractPkgs(pktBuf *bytes.Buffer) (readCount int, err error) {
+	return
 }
 
 // 发送包
@@ -78,13 +88,19 @@ func (con *Connection) SendPkgs() {
 
 }
 func (con *Connection) Do() {
+	defer func() {
+		err := recover()
+		if err != nil {
+			log.Printf("dumped safely,err:%v", err)
+		}
+	}()
 	go con.LoopReceivePkgs()
 	go con.SendPkgs()
 	for {
 		select {
 		case <-con.close:
-			//todo
-			break
+			con.con.Close()
+			return
 		}
 	}
 }
