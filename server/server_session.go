@@ -1,17 +1,26 @@
 package server
 
-import "github.com/funnycode-org/gotty/server/listener"
+import (
+	"github.com/funnycode-org/gotty/protocol"
+	"github.com/funnycode-org/gotty/server/listener"
+)
 
 type Session struct {
 	//Connection net.Conn
 	l             listener.Listener
 	receivedBytes []byte
+	protocol      protocol.Protocol
 }
 
-func NewSession(l listener.Listener) *Session {
+func (s *Session) Send() error {
+	panic("implement me")
+}
+
+func NewSession(l listener.Listener, protocol protocol.Protocol) *Session {
 	return &Session{
 		l:             l,
 		receivedBytes: make([]byte, 1024),
+		protocol:      protocol,
 	}
 }
 

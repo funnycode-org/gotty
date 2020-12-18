@@ -4,4 +4,5 @@ type Session interface {
 	Close() error
 	Open() error
 	SessionId() int
+	Send() error
 }

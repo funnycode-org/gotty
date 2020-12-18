@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"github.com/funnycode-org/gotty/base"
 	"github.com/funnycode-org/gotty/server/listener"
 	"net"
@@ -36,7 +37,10 @@ func (server *Server) Start() error {
 			return err
 		}
 		// 每个Client一个Goroutine
-		server.workPool.AddConnection(NewConnection(conn, NewSession(server.FindListener())))
+		err = server.workPool.AddConnection(NewConnection(conn, NewSession(server.FindListener())))
+		if err != nil {
+			fmt.Println("添加连接任务出现错误：%v", err)
+		}
 	}
 	return nil
 }

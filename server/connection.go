@@ -45,14 +45,16 @@ func (con *Connection) LoopReceivePkgs() {
 READ:
 	for {
 		count, err := con.con.Read(serverSession.receivedBytes)
-		switch err {
-		case io.EOF:
-			log.Printf("session %d 读取包错误", con.session.SessionId())
-			goto READ
-		default:
-			log.Printf("receive pkgs error:%v", err)
-			con.close <- struct{}{}
-			break READ
+		if err != nil {
+			switch err {
+			case io.EOF:
+				log.Printf("session %d 读取包错误", con.session.SessionId())
+				goto READ
+			default:
+				log.Printf("receive pkgs error:%v", err)
+				con.close <- struct{}{}
+				break READ
+			}
 		}
 		if count == 0 {
 			continue
@@ -85,8 +87,11 @@ func (con *Connection) tryExtractPkgs(pktBuf *bytes.Buffer) (readCount int, err 
 
 // 发送包
 func (con *Connection) SendPkgs() {
+	for {
 
+	}
 }
+
 func (con *Connection) Do() {
 	defer func() {
 		err := recover()
