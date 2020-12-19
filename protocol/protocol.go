@@ -1,8 +1,10 @@
 package protocol
 
-import "io"
+import (
+	"bytes"
+)
 
 type Protocol interface {
-	Decode(reader io.Reader, targetObj interface{}) error
+	Decode(reader bytes.Buffer, writer bytes.Buffer) (bool, error)
 	Encode(srcObj interface{}) ([]byte, error)
 }
