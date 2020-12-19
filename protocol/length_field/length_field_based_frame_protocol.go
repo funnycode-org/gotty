@@ -19,6 +19,10 @@ type LengthFieldBasedFrame struct {
 	readingPkgs            bool
 }
 
+func init() {
+
+}
+
 type Option func(*LengthFieldBasedFrame)
 
 func NewLengthFieldBasedFrame(options ...Option) *LengthFieldBasedFrame {

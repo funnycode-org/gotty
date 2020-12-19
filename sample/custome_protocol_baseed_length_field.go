@@ -52,11 +52,11 @@ func (c *CustomizeProtocolBasedLengthField) Encode(srcObj interface{}) ([]byte, 
 	return buf.Bytes(), nil
 }
 
-func New(maxFrameLength uint) protocol.ProtocolDecoder {
+func New(maxFrameLength int64) protocol.ProtocolDecoder {
 	var cpblf CustomizeProtocolBasedLengthField
 	return length_field.NewLengthFieldBasedFrame(
 		length_field.WithMaxFrameLength(maxFrameLength),
-		length_field.WithLengthFieldOffset(uint(unsafe.Sizeof(cpblf.Type)+unsafe.Sizeof(cpblf.Flag))),
-		length_field.WithLengthFieldLength(uint32(unsafe.Sizeof(cpblf.Length))),
+		length_field.WithLengthFieldOffset(int32(unsafe.Sizeof(cpblf.Type)+unsafe.Sizeof(cpblf.Flag))),
+		length_field.WithLengthFieldLength(int32(unsafe.Sizeof(cpblf.Length))),
 	)
 }
