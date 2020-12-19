@@ -5,8 +5,11 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"github.com/funnycode-org/gotty/base"
 	"github.com/funnycode-org/gotty/protocol"
 	"github.com/funnycode-org/gotty/protocol/length_field"
+	"github.com/funnycode-org/gotty/protocol/registry"
+	"reflect"
 	"unsafe"
 )
 
@@ -20,6 +23,10 @@ type CustomizeProtocolBasedLengthField struct {
 	Length uint64
 	// 请求消息体
 	Body string
+}
+
+func init() {
+	registry.SetProtocol(reflect.TypeOf(CustomizeProtocolBasedLengthField{}), newProtocolBasedLengthField(base.GottyConfig.Server.MaxFrameLength))
 }
 
 func (c *CustomizeProtocolBasedLengthField) Decode(myBytes []byte) (decodeRrr error) {
@@ -52,7 +59,7 @@ func (c *CustomizeProtocolBasedLengthField) Encode(srcObj interface{}) ([]byte, 
 	return buf.Bytes(), nil
 }
 
-func New(maxFrameLength int64) protocol.ProtocolDecoder {
+func newProtocolBasedLengthField(maxFrameLength int64) protocol.ProtocolDecoder {
 	var cpblf CustomizeProtocolBasedLengthField
 	return length_field.NewLengthFieldBasedFrame(
 		length_field.WithMaxFrameLength(maxFrameLength),

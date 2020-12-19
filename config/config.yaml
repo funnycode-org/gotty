@@ -4,4 +4,5 @@ server:
   port: 8080
   listenerName: default
   protocolType: length_field
-  protocolName:
+  maxFrameLength: 10000
+#  protocolName:

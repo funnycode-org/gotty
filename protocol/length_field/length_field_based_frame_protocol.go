@@ -19,8 +19,9 @@ type LengthFieldBasedFrame struct {
 	readingPkgs            bool
 }
 
-func init() {
+const LengthFieldBasedFrameName = "length_field"
 
+func init() {
 }
 
 type Option func(*LengthFieldBasedFrame)
@@ -34,6 +35,9 @@ func NewLengthFieldBasedFrame(options ...Option) *LengthFieldBasedFrame {
 }
 
 func WithMaxFrameLength(maxFrameLength int64) Option {
+	if maxFrameLength < 1 {
+		log.Panicf("无效的maxFrameLength:%d", maxFrameLength)
+	}
 	return func(lfbf *LengthFieldBasedFrame) {
 		lfbf.MaxFrameLength = maxFrameLength
 	}

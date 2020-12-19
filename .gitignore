@@ -97,3 +97,4 @@ fabric.properties
 go.mod
 /.idea/markdown-navigator.xml
 /.idea/markdown-navigator-enh.xml
+*.iml

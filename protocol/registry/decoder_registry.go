@@ -4,35 +4,37 @@ import (
 	"errors"
 	"fmt"
 	"github.com/funnycode-org/gotty/protocol"
+	"reflect"
 	"sync"
 )
 
 var (
-	registry map[string]protocol.ProtocolDecoder
-	locker   sync.RWMutex
+	registryProtocolKind protocol.ProtocolDecoder
+	registryProtocol     reflect.Type
+	locker               sync.RWMutex
 )
 
 func init() {
-	registry = make(map[string]protocol.ProtocolDecoder)
 	locker = sync.RWMutex{}
 }
 
-func AddProtocol(name string, pd protocol.ProtocolDecoder) error {
+func SetProtocol(rp reflect.Type, pd protocol.ProtocolDecoder) error {
 	locker.Lock()
 	defer locker.Unlock()
-	if _, exist := registry[name]; exist {
-		return errors.New(fmt.Sprintf("ProtocolDecoder %s had been registered!", name))
+	if registryProtocolKind != nil {
+		return errors.New(fmt.Sprintf("ProtocolDecoder %s had been registered!", registryProtocol.Name()))
 	}
-	registry[name] = pd
+	registryProtocolKind = pd
+	registryProtocol = rp
 	return nil
 }
 
-func FindProtocol(name string) (protocol.ProtocolDecoder, error) {
+func GetProtocol() (protocol.ProtocolDecoder, reflect.Type, error) {
 	locker.RLock()
 	defer locker.Unlock()
-	if pd, exist := registry[name]; !exist {
-		return nil, errors.New(fmt.Sprintf("ProtocolDecoder %s hadn't  been registered!", name))
+	if registryProtocolKind != nil {
+		return nil, nil, errors.New("没有注册过协议！")
 	} else {
-		return pd, nil
+		return registryProtocolKind, registryProtocol, nil
 	}
 }

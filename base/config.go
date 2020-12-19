@@ -2,7 +2,7 @@ package base
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"sync"
 )
@@ -33,6 +33,7 @@ type Server struct {
 	SessionNumPerConnection uint   `json:"sessionNumPerConnection" yaml:"sessionNumPerConnection"`
 	Port                    uint   `json:"port" yaml:"port"`
 	ListenerName            string `json:"listenerName" yaml:"listenerName"`
+	MaxFrameLength          int64  `json:"maxFrameLength" yaml:"maxFrameLength"`
 }
 type Client struct {
 }
