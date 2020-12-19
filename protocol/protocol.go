@@ -4,7 +4,10 @@ import (
 	"bytes"
 )
 
-type Protocol interface {
+type ProtocolDecoder interface {
 	Decode(reader bytes.Buffer, writer bytes.Buffer) (bool, error)
+}
+
+type ProtocolEncoder interface {
 	Encode(srcObj interface{}) ([]byte, error)
 }

@@ -10,7 +10,7 @@ import (
 type LengthFieldBasedFrame struct {
 	MaxFrameLength    int64 // 发送的数据包最大长度
 	LengthFieldOffset int32 // 长度域偏移量
-	LengthFieldLength int64 // 长度域的自己的字节数长度
+	LengthFieldLength int32 // 长度域的自己的字节数长度
 	// 暂时不考虑下面的场景
 	//LengthAdjustment    uint // 长度域的偏移量矫正
 	//InitialBytesToStrip uint // 丢弃的起始字节数
@@ -29,19 +29,19 @@ func NewLengthFieldBasedFrame(options ...Option) *LengthFieldBasedFrame {
 	return &lfbf
 }
 
-func WithMaxFrameLength(maxFrameLength uint) Option {
+func WithMaxFrameLength(maxFrameLength int64) Option {
 	return func(lfbf *LengthFieldBasedFrame) {
 		lfbf.MaxFrameLength = maxFrameLength
 	}
 }
 
-func WithLengthFieldOffset(lengthFieldOffset uint) Option {
+func WithLengthFieldOffset(lengthFieldOffset int32) Option {
 	return func(lfbf *LengthFieldBasedFrame) {
 		lfbf.LengthFieldOffset = lengthFieldOffset
 	}
 }
 
-func WithLengthFieldLength(lengthFieldLength uint64) Option {
+func WithLengthFieldLength(lengthFieldLength int32) Option {
 	return func(lfbf *LengthFieldBasedFrame) {
 		lfbf.LengthFieldLength = lengthFieldLength
 	}
@@ -103,7 +103,7 @@ func (l *LengthFieldBasedFrame) Decode(reader bytes.Buffer, writer bytes.Buffer)
 	}
 
 	contentFrameLength := l.getContentFrameLength(reader)
-	totalFrameLength := contentFrameLength + int64(l.LengthFieldOffset) + l.LengthFieldLength
+	totalFrameLength := contentFrameLength + int64(l.LengthFieldOffset) + int64(l.LengthFieldLength)
 
 	if totalFrameLength > l.MaxFrameLength {
 		log.Println("该包太长了，直接丢弃了")
@@ -128,8 +128,4 @@ func (l *LengthFieldBasedFrame) getContentFrameLength(reader bytes.Buffer) int64
 	//
 	util.UnReadBuffer(reader, uint64(l.LengthFieldOffset)+uint64(l.LengthFieldLength))
 	return contentLength
-}
-
-func (l *LengthFieldBasedFrame) Encode(srcObj interface{}) ([]byte, error) {
-	panic("implement me")
 }

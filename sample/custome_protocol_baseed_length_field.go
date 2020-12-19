@@ -1,6 +1,8 @@
 package sample
 
 import (
+	"bytes"
+	"encoding/binary"
 	"github.com/funnycode-org/gotty/protocol"
 	"github.com/funnycode-org/gotty/protocol/length_field"
 	"unsafe"
@@ -18,11 +20,22 @@ type CustomizeProtocolBasedLengthField struct {
 	Body string
 }
 
-func New(maxFrameLength uint) protocol.Protocol {
+func (c *CustomizeProtocolBasedLengthField) Encode(srcObj interface{}) ([]byte, error) {
+	cpblf := srcObj.(CustomizeProtocolBasedLengthField)
+	myBytes := make([]byte, 1+1+8+len(cpblf.Body))
+	buf := bytes.NewBuffer(myBytes)
+	buf.WriteByte(cpblf.Type)
+	buf.WriteByte(cpblf.Flag)
+	binary.Write(buf, binary.LittleEndian, cpblf.Length)
+	buf.WriteString(cpblf.Body)
+	return buf.Bytes(), nil
+}
+
+func New(maxFrameLength uint) protocol.ProtocolDecoder {
 	var cpblf CustomizeProtocolBasedLengthField
 	return length_field.NewLengthFieldBasedFrame(
 		length_field.WithMaxFrameLength(maxFrameLength),
 		length_field.WithLengthFieldOffset(uint(unsafe.Sizeof(cpblf.Type)+unsafe.Sizeof(cpblf.Flag))),
-		length_field.WithLengthFieldLength(uint(unsafe.Sizeof(cpblf.Length))),
+		length_field.WithLengthFieldLength(uint32(unsafe.Sizeof(cpblf.Length))),
 	)
 }
