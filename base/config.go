@@ -38,6 +38,8 @@ type Server struct {
 	SendTimeout             int64  `json:"sendTimeout" yaml:"sendTimeout"`
 }
 type Client struct {
+	ServerIp string `json:"serverIp" yaml:"serverIp"`
+	Port     int    `json:"port" yaml:"port"`
 }
 
 func ParseConfigYaml(target *Config, filePath string) error {

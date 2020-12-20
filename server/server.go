@@ -52,11 +52,11 @@ func (server *Server) FindListener() (serverListener listener.Listener) {
 	listenerName := base.GottyConfig.Server.ListenerName
 	var err error
 	if len(listenerName) <= 0 {
-		listenerName = listener.DefaultListenerName
+		listenerName = listener.DefaultClientListenerName
 	}
 	serverListener, err = listener.FindListener(listenerName)()
 	if err != nil {
-		serverListener, _ = listener.FindListener(listener.DefaultListenerName)()
+		serverListener, _ = listener.FindListener(listener.DefaultClientListenerName)()
 	}
 	return
 }
