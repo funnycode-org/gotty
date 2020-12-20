@@ -20,9 +20,10 @@ type Connection struct {
 	RegistryProtocolKind protocol.ProtocolDecoder
 	RegistryProtocol     reflect.Type
 	writer               *bytes.Buffer
+	wrappedSession       Session
 }
 
-func NewConnection(con net.Conn, session Session, isServer bool) *Connection {
+func NewConnection(con net.Conn, session Session, wrappedSession Session, isServer bool) *Connection {
 	registryProtocolKind, registryProtocol, err := registry.GetProtocol()
 	if err != nil {
 		log.Fatalf("获取自定义的协议失败:%v", err)
@@ -36,6 +37,7 @@ func NewConnection(con net.Conn, session Session, isServer bool) *Connection {
 		con:                  con,
 		close:                make(chan struct{}, 1),
 		session:              session,
+		wrappedSession:       wrappedSession,
 	}
 }
 

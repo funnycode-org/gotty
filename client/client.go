@@ -10,11 +10,10 @@ import (
 )
 
 type Client struct {
-	Ip             string
-	Port           int
-	sessions       map[int]*Session
-	locker         sync.RWMutex
-	WrappedSession base.Session
+	Ip       string
+	Port     int
+	sessions map[int]*Session
+	locker   sync.RWMutex
 }
 
 func NewClient() *Client {
@@ -86,10 +85,10 @@ func (c *Client) newSession() (session *Session, err error) {
 	if err != nil {
 		return
 	}
-	c.WrappedSession = newWrappedSession(newSession)
+	wrappedSession := newWrappedSession(newSession)
 	// 使用一个安全的session
-	session.l.OnOpen(c.WrappedSession)
-	connection := base.NewConnection(con, newSession, false)
+	session.l.OnOpen(wrappedSession)
+	connection := base.NewConnection(con, newSession, wrappedSession, false)
 	go connection.Do()
 	return
 }

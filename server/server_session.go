@@ -19,6 +19,7 @@ type Session struct {
 	registryProtocol reflect.Type
 	sessionId        int64
 	send             chan []byte
+	WrappedSession   WrappedSession
 }
 
 func (s *Session) GetSendChannel() <-chan []byte {
@@ -47,6 +48,10 @@ func NewSession(l listener.Listener) *Session {
 		l:             l,
 		receivedBytes: make([]byte, 1024),
 	}
+}
+
+func (s *Session) GetWrappedSession() interface{} {
+	return s.WrappedSession
 }
 
 func (s *Session) Close() error {

@@ -8,4 +8,5 @@ type Session interface {
 	Send(bytes []byte) error
 	GetRegistryProtocol() reflect.Type
 	GetSendChannel() <-chan []byte
+	GetWrappedSession() interface{}
 }

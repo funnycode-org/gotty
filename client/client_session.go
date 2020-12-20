@@ -9,10 +9,11 @@ import (
 var number int64
 
 type Session struct {
-	Using         bool
-	sessionId     int64
-	l             listener.Listener
-	receivedBytes []byte
+	Using          bool
+	sessionId      int64
+	l              listener.Listener
+	receivedBytes  []byte
+	WrappedSession *WrappedSession
 }
 
 func (s *Session) Send(bytes []byte) error {
@@ -33,6 +34,10 @@ func NewSession(l listener.Listener) *Session {
 		l:             l,
 		receivedBytes: make([]byte, 1024),
 	}
+}
+
+func (s *Session) GetWrappedSession() interface{} {
+	return s.WrappedSession
 }
 
 func (s Session) Close() error {

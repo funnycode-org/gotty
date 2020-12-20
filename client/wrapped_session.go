@@ -8,6 +8,10 @@ type WrappedSession struct {
 	session *Session
 }
 
+func (w *WrappedSession) GetWrappedSession() interface{} {
+	panic("can't be called!")
+}
+
 func newWrappedSession(session *Session) *WrappedSession {
 	return &WrappedSession{
 		session: session,
