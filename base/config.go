@@ -34,6 +34,8 @@ type Server struct {
 	Port                    uint   `json:"port" yaml:"port"`
 	ListenerName            string `json:"listenerName" yaml:"listenerName"`
 	MaxFrameLength          int64  `json:"maxFrameLength" yaml:"maxFrameLength"`
+	Retry                   int    `json:"retry" yaml:"retry"`
+	SendTimeout             int64  `json:"sendTimeout" yaml:"sendTimeout"`
 }
 type Client struct {
 }

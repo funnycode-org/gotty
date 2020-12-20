@@ -1,9 +1,9 @@
 package base
 
 type Listener interface {
-	OnOpen() error
-	OnClose() error
-	OnSend(pks []byte) error
-	OnReceive() ([]byte, error)
-	OnError() error
+	OnOpen(session Session) error
+	OnClose(session Session) error
+	OnSend(session Session) error
+	OnReceive(session Session, bytes []byte) ([]byte, error)
+	OnError(session Session) error
 }

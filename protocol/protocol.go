@@ -5,7 +5,7 @@ import (
 )
 
 type ProtocolDecoder interface {
-	Decode(reader bytes.Buffer, writer bytes.Buffer) (bool, error)
+	Decode(reader *bytes.Buffer, writer *bytes.Buffer) (bool, error)
 }
 
 //type ProtocolEncoder interface {

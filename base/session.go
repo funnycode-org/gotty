@@ -2,7 +2,6 @@ package base
 
 type Session interface {
 	Close() error
-	Open() error
 	SessionId() int
-	Send() error
+	Send(bytes []byte) error
 }

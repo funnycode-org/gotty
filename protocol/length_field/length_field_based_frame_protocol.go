@@ -3,6 +3,7 @@ package length_field
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"github.com/funnycode-org/gotty/util"
 	"log"
 )
@@ -67,7 +68,7 @@ func WithLengthFieldLength(lengthFieldLength int32) Option {
 //	}
 //}
 
-func (l *LengthFieldBasedFrame) Decode(reader bytes.Buffer, writer bytes.Buffer) (b bool, err error) {
+func (l *LengthFieldBasedFrame) Decode(reader *bytes.Buffer, writer *bytes.Buffer) (b bool, err error) {
 
 	for ; l.skipBytes > 0; l.skipBytes-- {
 		err := reader.UnreadByte()
@@ -114,8 +115,8 @@ func (l *LengthFieldBasedFrame) Decode(reader bytes.Buffer, writer bytes.Buffer)
 	totalFrameLength := contentFrameLength + int64(l.LengthFieldOffset) + int64(l.LengthFieldLength)
 
 	if totalFrameLength > l.MaxFrameLength {
-		log.Println("该包太长了，直接丢弃了")
 		l.skipBytes = totalFrameLength
+		err = errors.New("该包太长了，直接丢弃了")
 		return
 	}
 
@@ -126,7 +127,7 @@ func (l *LengthFieldBasedFrame) Decode(reader bytes.Buffer, writer bytes.Buffer)
 	return
 }
 
-func (l *LengthFieldBasedFrame) getContentFrameLength(reader bytes.Buffer) int64 {
+func (l *LengthFieldBasedFrame) getContentFrameLength(reader *bytes.Buffer) int64 {
 	reader.Next(int(l.LengthFieldOffset))
 	contentLengthBytes := reader.Next(int(l.LengthFieldLength))
 

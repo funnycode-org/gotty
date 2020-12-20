@@ -2,17 +2,24 @@ package server
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/funnycode-org/gotty/base"
+	"github.com/funnycode-org/gotty/protocol"
+	"github.com/funnycode-org/gotty/protocol/registry"
 	"io"
 	"log"
 	"net"
+	"reflect"
 )
 
 type Connection struct {
 	con     net.Conn
 	session base.Session
 	//sessionMap
-	close chan struct{}
+	close                chan struct{}
+	RegistryProtocolKind protocol.ProtocolDecoder
+	RegistryProtocol     reflect.Type
+	writer               *bytes.Buffer
 }
 
 //type sessionMap struct {
@@ -21,14 +28,18 @@ type Connection struct {
 //}
 
 func NewConnection(con net.Conn, session base.Session) *Connection {
+	registryProtocolKind, registryProtocol, err := registry.GetProtocol()
+	if err != nil {
+		log.Fatalf("获取自定义的协议失败:%v", err)
+	}
+	var buffer = make([]byte, 1024)
 	return &Connection{
-		con:     con,
-		close:   make(chan struct{}, 1),
-		session: session,
-		//sessionMap: sessionMap{
-		//	sessionIds: make(map[int]struct{}, sessionCount),
-		//	sessions:   make([]Session, sessionCount),
-		//},
+		writer:               bytes.NewBuffer(buffer),
+		RegistryProtocolKind: registryProtocolKind,
+		RegistryProtocol:     registryProtocol,
+		con:                  con,
+		close:                make(chan struct{}, 1),
+		session:              session,
 	}
 }
 
@@ -62,7 +73,7 @@ READ:
 		pktBuf.Reset()
 		pktBuf.Write(serverSession.receivedBytes)
 		// 包有问题，清空？
-		readCount, err := con.tryExtractPkgs(&pktBuf)
+		err = con.tryExtractPkgs(&pktBuf)
 		if err != nil {
 			serverSession.receivedBytes = serverSession.receivedBytes[:0]
 			pktBuf.Reset()
@@ -72,23 +83,47 @@ READ:
 			pktBuf.Reset()
 			continue
 		}
-
-		// 回退回去
-		for ; readCount < 1; readCount-- {
-			pktBuf.UnreadByte()
-		}
 	}
 }
 
 // 使用用户的自定义的协议去解包
-func (con *Connection) tryExtractPkgs(pktBuf *bytes.Buffer) (readCount int, err error) {
+func (con *Connection) tryExtractPkgs(pktBuf *bytes.Buffer) (err error) {
+	decodeOk, err := con.RegistryProtocolKind.Decode(pktBuf, con.writer)
+	if err != nil {
+		return
+	}
+	if decodeOk {
+		serverSession := con.session.(*Session)
+		value := reflect.New(serverSession.registryProtocol).Elem()
+		customizeProtocol, ok := value.Interface().(protocol.CustomizeProtocol)
+		if !ok {
+			panic(fmt.Sprintf("类型 %s 没有实现接口protocol.CustomizeProtocol", serverSession.registryProtocol.Name()))
+		}
+		bytes := con.writer.Bytes()
+		err := customizeProtocol.Decode(bytes)
+		if err != nil {
+			log.Printf("哦豁，解析到结果失败了:%v\n", err)
+			log.Println("错误解析的字节", bytes)
+		}
+		con.writer.Reset()
+	}
 	return
 }
 
 // 发送包
 func (con *Connection) SendPkgs() {
+	session := con.session.(*Session)
 	for {
-
+		select {
+		case bytes := <-session.send:
+			for i := 0; i < base.GottyConfig.Server.Retry; i++ {
+				_, err := con.con.Write(bytes)
+				if err == nil {
+					break
+				}
+			}
+			break
+		}
 	}
 }
 

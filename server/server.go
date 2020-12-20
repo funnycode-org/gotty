@@ -3,33 +3,20 @@ package server
 import (
 	"fmt"
 	"github.com/funnycode-org/gotty/base"
-	"github.com/funnycode-org/gotty/protocol"
-	"github.com/funnycode-org/gotty/protocol/registry"
 	"github.com/funnycode-org/gotty/server/listener"
-	"log"
 	"net"
-	"reflect"
 	"strconv"
 )
 
 type Server struct {
-	concurrency          uint // 并发个数
-	workPool             *WorkPool
-	RegistryProtocolKind protocol.ProtocolDecoder
-	RegistryProtocol     reflect.Type
+	concurrency uint // 并发个数
+	workPool    *WorkPool
 }
 
 func NewServer() *Server {
-	registryProtocolKind, registryProtocol, err := registry.GetProtocol()
-	if err != nil {
-		log.Fatalf("获取自定义的协议失败:%v", err)
-	}
 	server := &Server{
-		concurrency:          base.GottyConfig.Server.Concurrency,
-		workPool:             newWorkPool(base.GottyConfig.Server.Concurrency, base.GottyConfig.Server.SessionNumPerConnection),
-		RegistryProtocolKind: registryProtocolKind,
-		RegistryProtocol:     registryProtocol,
-		//connections: make(map[string]base.Connection, 13),
+		concurrency: base.GottyConfig.Server.Concurrency,
+		workPool:    newWorkPool(base.GottyConfig.Server.Concurrency, base.GottyConfig.Server.SessionNumPerConnection),
 	}
 	return server
 }
@@ -49,7 +36,11 @@ func (server *Server) Start() error {
 			return err
 		}
 		// 每个Client一个Goroutine
-		err = server.workPool.AddConnection(NewConnection(conn, NewSession(server.FindListener(), server.RegistryProtocolKind)))
+
+		session := NewSession(server.FindListener())
+		session.l.OnOpen(session)
+		connection := NewConnection(conn, session)
+		err = server.workPool.AddConnection(connection)
 		if err != nil {
 			fmt.Println("添加连接任务出现错误:", err)
 		}

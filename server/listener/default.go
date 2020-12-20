@@ -14,36 +14,36 @@ func init() {
 }
 
 type DefaultListener struct {
-	session base.Session
 }
 
 func (d *DefaultListener) FactoryConstruct() error {
 	panic("implement me")
 }
 
-func (d *DefaultListener) OnOpen() error {
-	fmt.Printf("session %d is opened!", d.session.SessionId())
+// 用户在这里能得到session，然后去发送数据
+func (d *DefaultListener) OnOpen(session base.Session) error {
+	fmt.Printf("session %d is opened!", session.SessionId())
 	return nil
 }
 
-func (d *DefaultListener) OnClose() error {
-	fmt.Printf("session %d is closed!", d.session.SessionId())
+func (d *DefaultListener) OnClose(session base.Session) error {
+	fmt.Printf("session %d is closed!", session.SessionId())
 	return nil
 }
 
-func (d *DefaultListener) OnSend(pks []byte) error {
-	fmt.Printf("session %d is sending bytes: %x!", d.session.SessionId(), pks)
+func (d *DefaultListener) OnSend(session base.Session) error {
+	fmt.Printf("session %d is sending bytes: %x!", session.SessionId(), session)
 	return nil
 }
 
-func (d *DefaultListener) OnReceive() ([]byte, error) {
+func (d *DefaultListener) OnReceive(session base.Session, bytes []byte) ([]byte, error) {
 	panic("implement me")
 }
 
-func (d *DefaultListener) OnError() error {
+func (d *DefaultListener) OnError(session base.Session) error {
 	panic("implement me")
 }
 
 func (d *DefaultListener) GetRegistryListenerName() string {
-	panic("implement me")
+	return DefaultListenerName
 }
