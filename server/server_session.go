@@ -21,6 +21,14 @@ type Session struct {
 	send             chan []byte
 }
 
+func (s *Session) GetSendChannel() <-chan []byte {
+	return s.send
+}
+
+func (s *Session) GetRegistryProtocol() reflect.Type {
+	return s.registryProtocol
+}
+
 func (s *Session) Send(bytes []byte) (err error) {
 	timeout := time.After(time.Millisecond * time.Duration(base.GottyConfig.Server.SendTimeout))
 	select {

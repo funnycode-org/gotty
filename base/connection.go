@@ -1,9 +1,8 @@
-package server
+package base
 
 import (
 	"bytes"
 	"fmt"
-	"github.com/funnycode-org/gotty/base"
 	"github.com/funnycode-org/gotty/protocol"
 	"github.com/funnycode-org/gotty/protocol/registry"
 	"io"
@@ -13,8 +12,9 @@ import (
 )
 
 type Connection struct {
-	con     net.Conn
-	session base.Session
+	isServer bool
+	con      net.Conn
+	session  Session
 	//sessionMap
 	close                chan struct{}
 	RegistryProtocolKind protocol.ProtocolDecoder
@@ -22,18 +22,14 @@ type Connection struct {
 	writer               *bytes.Buffer
 }
 
-//type sessionMap struct {
-//	sessionIds map[int]struct{}
-//	sessions   []Session
-//}
-
-func NewConnection(con net.Conn, session base.Session) *Connection {
+func NewConnection(con net.Conn, session Session, isServer bool) *Connection {
 	registryProtocolKind, registryProtocol, err := registry.GetProtocol()
 	if err != nil {
 		log.Fatalf("获取自定义的协议失败:%v", err)
 	}
 	var buffer = make([]byte, 1024)
 	return &Connection{
+		isServer:             isServer,
 		writer:               bytes.NewBuffer(buffer),
 		RegistryProtocolKind: registryProtocolKind,
 		RegistryProtocol:     registryProtocol,
@@ -51,11 +47,16 @@ func (con *Connection) LoopReceivePkgs() {
 			return
 		}
 	}()
-	serverSession := con.session.(*Session)
+	var receivedBytes []byte
+	if con.isServer {
+		receivedBytes = make([]byte, GottyConfig.Server.ReceivedBytesLength)
+	} else {
+		receivedBytes = make([]byte, GottyConfig.Client.ReceivedBytesLength)
+	}
 	var pktBuf bytes.Buffer
 READ:
 	for {
-		count, err := con.con.Read(serverSession.receivedBytes)
+		count, err := con.con.Read(receivedBytes)
 		if err != nil {
 			switch err {
 			case io.EOF:
@@ -71,11 +72,11 @@ READ:
 			continue
 		}
 		pktBuf.Reset()
-		pktBuf.Write(serverSession.receivedBytes)
+		pktBuf.Write(receivedBytes)
 		// 包有问题，清空？
 		err = con.tryExtractPkgs(&pktBuf)
 		if err != nil {
-			serverSession.receivedBytes = serverSession.receivedBytes[:0]
+			receivedBytes = receivedBytes[:0]
 			pktBuf.Reset()
 			continue
 		}
@@ -93,11 +94,11 @@ func (con *Connection) tryExtractPkgs(pktBuf *bytes.Buffer) (err error) {
 		return
 	}
 	if decodeOk {
-		serverSession := con.session.(*Session)
-		value := reflect.New(serverSession.registryProtocol).Elem()
+		//serverSession := con.session.(*server.Session)
+		value := reflect.New(con.session.GetRegistryProtocol()).Elem()
 		customizeProtocol, ok := value.Interface().(protocol.CustomizeProtocol)
 		if !ok {
-			panic(fmt.Sprintf("类型 %s 没有实现接口protocol.CustomizeProtocol", serverSession.registryProtocol.Name()))
+			panic(fmt.Sprintf("类型 %s 没有实现接口protocol.CustomizeProtocol", con.session.GetRegistryProtocol().Name()))
 		}
 		bytes := con.writer.Bytes()
 		err := customizeProtocol.Decode(bytes)
@@ -112,11 +113,10 @@ func (con *Connection) tryExtractPkgs(pktBuf *bytes.Buffer) (err error) {
 
 // 发送包
 func (con *Connection) SendPkgs() {
-	session := con.session.(*Session)
 	for {
 		select {
-		case bytes := <-session.send:
-			for i := 0; i < base.GottyConfig.Server.Retry; i++ {
+		case bytes := <-con.session.GetSendChannel():
+			for i := 0; i < GottyConfig.Server.Retry; i++ {
 				_, err := con.con.Write(bytes)
 				if err == nil {
 					break

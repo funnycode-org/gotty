@@ -36,10 +36,13 @@ type Server struct {
 	MaxFrameLength          int64  `json:"maxFrameLength" yaml:"maxFrameLength"`
 	Retry                   int    `json:"retry" yaml:"retry"`
 	SendTimeout             int64  `json:"sendTimeout" yaml:"sendTimeout"`
+	ReceivedBytesLength     int    `json:"receivedBytesLength" yaml:"receivedBytesLength"`
 }
 type Client struct {
-	ServerIp string `json:"serverIp" yaml:"serverIp"`
-	Port     int    `json:"port" yaml:"port"`
+	ServerIp            string `json:"serverIp" yaml:"serverIp"`
+	Port                int    `json:"port" yaml:"port"`
+	ReceivedBytesLength int    `json:"receivedBytesLength" yaml:"receivedBytesLength"`
+	SessionNum          int    `json:"sessionNum" yaml:"sessionNum"`
 }
 
 func ParseConfigYaml(target *Config, filePath string) error {

@@ -9,8 +9,9 @@ import (
 )
 
 type Server struct {
-	concurrency uint // 并发个数
-	workPool    *WorkPool
+	concurrency    uint // 并发个数
+	workPool       *WorkPool
+	WrappedSession base.Session
 }
 
 func NewServer() *Server {
@@ -38,8 +39,10 @@ func (server *Server) Start() error {
 		// 每个Client一个Goroutine
 
 		session := NewSession(server.FindListener())
-		session.l.OnOpen(session)
-		connection := NewConnection(conn, session)
+		server.WrappedSession = newWrappedSession(session)
+		// 使用一个安全的session
+		session.l.OnOpen(server.WrappedSession)
+		connection := base.NewConnection(conn, session, true)
 		err = server.workPool.AddConnection(connection)
 		if err != nil {
 			fmt.Println("添加连接任务出现错误:", err)
